@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 
-from flask import Flask, request
+from flask import Flask, request, jsonify, Blueprint
 from flask_restful import Api, Resource
 
 import io
@@ -8,15 +8,64 @@ import io
 from PIL import Image
 from ultralytics import YOLO
 import base64
+import json
+
+from flasgger import Swagger, swag_from, LazyString, LazyJSONEncoder
 
 from create_json import create_json
 
 app = Flask(__name__)
-api = Api(app)
+app.json_encoder = LazyJSONEncoder
+
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "Image Processing System",
+        "description": "API Documentation for Image Processing System",
+        "contact": {
+            "name": "Alisa",
+            "email": "alisaalborova13@gmail.com",
+        },
+        "termsOfService": "Terms of services",
+        "version": "1.0",
+        "host": "Image_Processing_System",
+        "basePath": "http://localhost:5000",
+        "license": {
+            "name": "License of API",
+            "url": "API license URL"
+        }
+    },
+    "schemes": [
+        "http",
+        "https"
+    ],
+}
+
+swagger_config = {
+    "headers": [
+        ('Access-Control-Allow-Origin', '*'),
+        ('Access-Control-Allow-Methods', "GET, POST"),
+    ],
+    "specs": [
+        {
+            "endpoint": 'Image_Processing_System',
+            "route": '/Image_Processing_System.json',
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/apidocs/",
+
+}
+swagger = Swagger(app, template=swagger_template, config=swagger_config)
 
 
-class ScreenshotResource(Resource):
-    def post(self):
+@swag_from("post.yaml")
+@app.route("/main", methods=["POST"])
+def post():
+    if request.method == "POST":
         xy = []
         cls = []
         # Получение данных из JSON-запроса
@@ -43,10 +92,10 @@ class ScreenshotResource(Resource):
         else:
             # Возвращение ошибки, если ключ "screenshot" отсутствует
             return {"error": "Missing 'screenshot' key in JSON data"}, 400
+    else:
+        return {"responseCode": "1","responseDesc": "Method Not Allowed"}, 405
 
 
-# Добавление ресурса к API
-api.add_resource(ScreenshotResource, '/screenshot')
 
 if __name__ == '__main__':
     # Запуск Flask-приложения
