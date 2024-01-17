@@ -1,17 +1,9 @@
-from flask import Flask, jsonify
-
-from flask import Flask, request, jsonify, Blueprint
-from flask_restful import Api, Resource
-
+from flask import Flask, request
 import io
-
 from PIL import Image
 from ultralytics import YOLO
 import base64
-import json
-
-from flasgger import Swagger, swag_from, LazyString, LazyJSONEncoder
-
+from flasgger import Swagger, swag_from, LazyJSONEncoder
 from create_json import create_json
 
 app = Flask(__name__)
@@ -66,8 +58,6 @@ swagger = Swagger(app, template=swagger_template, config=swagger_config)
 @app.route("/main", methods=["POST"])
 def post():
     if request.method == "POST":
-        xy = []
-        cls = []
         # Получение данных из JSON-запроса
         data = request.get_json()
 
@@ -79,7 +69,7 @@ def post():
 
             image = Image.open(io.BytesIO(binary_data))
 
-            model = YOLO('best.pt')
+            model = YOLO('bestv2.pt')
 
             results = model(source=image, show=True, conf=0.6, save=True)
 
@@ -93,8 +83,7 @@ def post():
             # Возвращение ошибки, если ключ "screenshot" отсутствует
             return {"error": "Missing 'screenshot' key in JSON data"}, 400
     else:
-        return {"responseCode": "1","responseDesc": "Method Not Allowed"}, 405
-
+        return {"responseCode": "1", "responseDesc": "Method Not Allowed"}, 405
 
 
 if __name__ == '__main__':
